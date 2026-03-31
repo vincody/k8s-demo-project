@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // KIỂM TRA QUYỀN TRUY CẬP TRƯỚC KHI LOAD TRANG
+        if (localStorage.getItem('k8s_auth_token') !== 'active') {
+            window.location.href = '/login';
+        }
+    </script>
+    <title>K8s Dev Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+    <div class="flex h-screen">
+        <div class="w-64 bg-gray-800 p-6 space-y-6 flex flex-col border-r border-gray-700">
+            <h1 class="text-2xl font-bold text-cyan-400 uppercase tracking-wider">K8S Observer</h1>
+            <nav class="space-y-2 flex-1">
+                <button onclick="showTab('overview')" class="w-full text-left px-4 py-2 hover:bg-gray-700 rounded transition">Overview</button>
+                <button onclick="showTab('pods')" class="w-full text-left px-4 py-2 hover:bg-gray-700 rounded transition">Workloads (Pods)</button>
+                <button onclick="showTab('nodes')" class="w-full text-left px-4 py-2 hover:bg-gray-700 rounded transition">Infrastructure (Nodes)</button>
+            </nav>
+            <div class="mt-auto pt-6 border-t border-gray-700">
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Served By Pod:</p>
+                <p id="serving-pod" class="text-xs font-mono text-green-400 break-words">Connecting...</p>
+            </div>
+        </div>
+
+        <div class="flex-1 p-10 overflow-y-auto bg-gray-900">
+            <div id="tab-overview" class="tab-content space-y-6">
+                <h2 class="text-3xl font-bold tracking-tight">Cluster Overview</h2>
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="bg-gray-800 p-6 rounded-lg border-t-4 border-cyan-500 shadow-lg">
+                        <p class="text-gray-400 uppercase text-xs tracking-widest">Total Pods</p>
+                        <p id="stat-pods" class="text-5xl font-mono mt-3 font-bold">0</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-lg border-t-4 border-purple-500 shadow-lg">
+                        <p class="text-gray-400 uppercase text-xs tracking-widest">Active Nodes</p>
+                        <p id="stat-nodes" class="text-5xl font-mono mt-3 font-bold">0</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-lg border-t-4 border-green-500 shadow-lg">
+                        <p class="text-gray-400 uppercase text-xs tracking-widest">Services</p>
+                        <p id="stat-services" class="text-5xl font-mono mt-3 font-bold">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-pods" class="tab-content hidden space-y-6">
+                <h2 class="text-3xl font-bold text-cyan-400 tracking-tight">Pod Monitor</h2>
+                <table class="w-full bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                    <thead class="bg-gray-700 text-gray-300 uppercase text-xs tracking-wider">
+                        <tr><th class="p-4 text-left">Name</th><th class="p-4">Status</th><th class="p-4">IP Address</th><th class="p-4">Restarts</th></tr>
+                    </thead>
+                    <tbody id="list-pods"></tbody>
+                </table>
+            </div>
+
+            <div id="tab-nodes" class="tab-content hidden space-y-6">
+                <h2 class="text-3xl font-bold text-purple-400 tracking-tight">Node Infrastructure</h2>
+                <div id="list-nodes" class="grid grid-cols-1 gap-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+        }
+
+        async function updateData() {
+            try {
+                const res = await fetch('/api/data');
+                const data = await res.json();
+
+                if(data.error) {
+                    console.error("Lỗi từ Server:", data.error);
+                    return;
+                }
+
+                // Cập nhật tên Pod đang phục vụ web
+                document.getElementById('serving-pod').innerText = data.servingPod;
+
+                // Update Stats
+                document.getElementById('stat-pods').innerText = data.stats.pods;
+                document.getElementById('stat-nodes').innerText = data.stats.nodes;
+                document.getElementById('stat-services').innerText = data.stats.services;
+
+                // Update Pods
+                document.getElementById('list-pods').innerHTML = data.pods.map(p => `
+                    <tr class="border-t border-gray-700 hover:bg-gray-750 transition">
+                        <td class="p-4 font-mono text-sm">${p.name}</td>
+                        <td class="p-4 text-center font-bold ${p.status === 'Running' ? 'text-green-400' : 'text-yellow-400'}">${p.status}</td>
+                        <td class="p-4 text-center text-gray-400 font-mono">${p.ip}</td>
+                        <td class="p-4 text-center">${p.restarts}</td>
+                    </tr>
+                `).join('');
+
+                // Update Nodes
+                document.getElementById('list-nodes').innerHTML = data.nodes.map(n => `
+                    <div class="bg-gray-800 p-5 rounded-lg flex justify-between items-center border-l-4 ${n.status === 'Ready' ? 'border-green-500' : 'border-red-500'} shadow-lg">
+                        <div><p class="font-bold text-xl">${n.name}</p><p class="text-sm text-gray-400 mt-1 uppercase tracking-widest text-[10px]">Status: ${n.status}</p></div>
+                        <div class="text-right"><p class="text-cyan-400 font-mono bg-gray-900 px-3 py-1 rounded">${n.cpu} CPU / ${n.ram}</p></div>
+                    </div>
+                `).join('');
+
+            } catch (e) { console.error("Lỗi cập nhật giao diện:", e); }
+        }
+
+        setInterval(updateData, 3000);
+        updateData();
+    </script>
+</body>
+</html>

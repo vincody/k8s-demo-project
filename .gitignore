@@ -1,0 +1,36 @@
+# --- Node.js ---
+# Không đẩy thư mục thư viện nặng này lên, người khác tải về sẽ dùng 'npm install'
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# --- Bảo mật & Bí mật (QUAN TRỌNG) ---
+# Chặn các file chứa mật khẩu hoặc mã truy cập
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Chặn file cấu hình Kubernetes nếu bạn lỡ tay copy vào dự án
+kubeconfig
+config
+.kube/
+
+# --- IDE & OS ---
+# Các file rác của hệ điều hành và trình soạn thảo
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# --- Build & Logs ---
+# Các file log sinh ra khi chạy ứng dụng
+logs
+*.log
+dist/
+build/

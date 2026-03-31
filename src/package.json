@@ -1,0 +1,14 @@
+{
+  "name": "k8s-demo-web",
+  "version": "1.0.0",
+  "description": "Ứng dụng Web Demo K8s",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@kubernetes/client-node": "^1.4.0",
+    "express": "^4.22.1"
+  }
+}
