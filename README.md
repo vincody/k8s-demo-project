@@ -18,3 +18,5 @@
 ## 📖 Giới thiệu dự án
 
 Đây là đồ án môn học với đề tài "Tìm hiểu về Kubernetes và Demo". Dự án tập trung vào việc nghiên cứu kiến trúc, các thành phần cốt lõi của Kubernetes và thực hiện các bài demo thực tế.
+
+demo for testing for my course
